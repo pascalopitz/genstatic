@@ -1,0 +1,17 @@
+{
+    "name": "genstatic"
+    , "description": "A static site generator"
+    , "keywords": ["static"]
+    , "version": "0.0.1a"
+    , "author": "Pascal Opitz <pascal@ilikecode.co.uk> (http://www.ilikecode.co.uk)"
+    , "main": "./lib/genstatic"
+    , "bin": {
+        "genstatic" : "./bin/genstatic"
+    }
+    , "dependencies": {
+        "underscore": "",
+        "eco": "",
+        "coffee-script": "",
+        "argsparser": ""
+    }
+}

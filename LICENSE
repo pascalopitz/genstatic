@@ -1,0 +1,22 @@
+A static site generator
+
+INSTALL
+=======
+
+git clone 
+cd 
+npm install
+
+
+USAGE
+=====
+
+
+
+CREDIT
+======
+
+Depends on the yaml package by visionmedia.
+
+https://github.com/visionmedia/js-yaml
+
