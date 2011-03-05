@@ -32,7 +32,7 @@ compile = (filename, content, basedir) ->
     
     fconfig = 
         template : "index"
-    
+
     try
         if(matches)
             content = content.replace matches[0], ''
@@ -49,10 +49,10 @@ compile = (filename, content, basedir) ->
 
     fs.readFile template, (err, tcontent) ->
         content = eco.render content, 
-            _.extend config, fconfig, helpers, env
+            _.extend {}, config, fconfig, helpers, env
             
         output = eco.render tcontent.toString(), 
-            _.extend config, fconfig, helpers, env, { content: content }
+            _.extend {}, config, fconfig, helpers, env, { content: content }
 
         fs.writeFile (outPath + fname), output, 'utf-8', (err) ->
             if(err)
