@@ -1,9 +1,11 @@
+#includes
+coffee = require "coffee-script"
+vm = require "vm"
 _ = require "underscore"
 fs = require "fs"
-args = require("argsparser").parse()
 eco = require "eco"
 
-assetPath = outPath = dataPath = templatePath = null
+sitePath = assetPath = outPath = dataPath = templatePath = null
 
 # defaul config
 config =
@@ -14,20 +16,26 @@ config =
     output : './www'
 
 # defaul helpers
-helpers =
+helpers = 
     partial : (str) ->
         pcontent = fs.readFileSync templatePath + '/' + str + config.extension
         eco.render pcontent.toString(), this
-    highlight : (str, check) ->
-        if(str == check)
-            ' class="hi"'
 
+# add custom helpers
+addHelpers = () ->
+    try
+        str = fs.readFileSync sitePath + '/helpers.coffee'
+        js = coffee.compile str.toString(), bare: 1
+        vm.runInNewContext js, helpers
+    catch e
+        console.log e.toString()
+        
 # compiles a file from the data directory
 compile = (filename, content, basedir) ->
     fname = filename.replace dataPath, ''
     
     # get embedded config
-    reg = /config: (\{[\w\d\s\r\n\_\-\\/,:\’ '"\.]*\n\})/gim
+    reg = /^---\n([\W\w]*)\n---\n/gim
     matches = reg.exec content
     
     fconfig = 
@@ -36,23 +44,26 @@ compile = (filename, content, basedir) ->
     try
         if(matches)
             content = content.replace matches[0], ''
-            fconfig = _.extend fconfig, JSON.parse matches[1]
+            js = coffee.compile matches[1], bare: 1
+            vm.runInNewContext js, fconfig
     catch e
         console.log "Not a valid file"
     null
-
+    
+    # set filename and basedir
     env = 
         filename : fname
         basedir : basedir
 
     template = templatePath + '/' + fconfig.template + config.extension
 
+    # read template file, render template and content
     fs.readFile template, (err, tcontent) ->
         content = eco.render content, 
             _.extend {}, config, fconfig, helpers, env
             
         output = eco.render tcontent.toString(), 
-            _.extend {}, config, fconfig, helpers, env, { content: content }
+            _.extend {}, config, fconfig, helpers, env, content: content
 
         fs.writeFile (outPath + fname), output, 'utf-8', (err) ->
             if(err)
@@ -61,7 +72,7 @@ compile = (filename, content, basedir) ->
 # parses directories recusively
 parseDir = (dir, depth) ->
     depth ?= 0
-    console.log dir, depth
+    console.log "parsing " + dir
 
     basepath = (i) ->
         path = ''
@@ -79,7 +90,7 @@ parseDir = (dir, depth) ->
                 if !err && stats.isFile()
                     fs.readFile path, (err, contents) ->
                         console.log "compiling file " + path.replace dataPath, ''
-                        compile path, contents.toString(), basepath(depth)
+                        compile path, contents.toString(), basepath depth
 
                 if !err && stats.isDirectory()
                     newdir = path.replace dataPath, outPath
@@ -88,16 +99,16 @@ parseDir = (dir, depth) ->
 
 # copies the assets into the output folder
 copyAssets = () ->
+    console.log "copying assets"
     spawn = require('child_process').spawn
     cp  = spawn 'cp', ['-R', assetPath, outPath]
-    console.log 'Spawned child pid: ' + cp.pid
     cp.stdin.end()    
 
-# checks a directory
+# checks a directory 
 checkDir = (path, message, callback) ->
     fs.stat path, (err, stats) ->
         if !err && stats.isDirectory()
-            callback(stats)
+            callback stats
             return
 
         console.log message
@@ -107,7 +118,7 @@ checkDir = (path, message, callback) ->
 checkFile = (path, message, callback) ->
     fs.stat path, (err, stats) ->
         if !err && stats.isFile()
-            callback(stats)
+            callback stats
             return
 
         console.log message
@@ -116,14 +127,17 @@ checkFile = (path, message, callback) ->
 # process a data directory
 process = (dir) ->    
     checkDir dir, "not a valid directory", (stats) ->
-        rdir =  fs.realpathSync dir
-        configPath = rdir + '/config.json'
+    
+        sitePath = rdir =  fs.realpathSync dir
+        configPath = rdir + '/config.coffee'
+        
+        addHelpers()
         
         checkFile configPath, "not a valid config file", (stats) ->
 
             # parse config file
-            confOverride = JSON.parse fs.readFileSync(configPath).toString()
-            config = _.extend(config, confOverride)
+            c = fs.readFileSync configPath
+            vm.runInNewContext c.toString(), config, '.'
 
             templatePath = rdir + '/' + config.templates
             dataPath = rdir + '/' + config.data
@@ -148,11 +162,14 @@ process = (dir) ->
 
 
         startParsing = () ->
+            copyAssets()
             outPath = fs.realpathSync outPath
             parseDir fs.realpathSync dataPath
-            copyAssets()
+
 
 # check if argv is ok
+args = require("argsparser").parse()
+
 if !args["-d"]
     console.log "Usage: genstatic -d ./site"
     return
