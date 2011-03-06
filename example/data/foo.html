@@ -1,5 +1,6 @@
 ---
 title = "Foo page"
+list = ['here', 'there', 'where']
 ---
 
 
@@ -8,3 +9,5 @@ title = "Foo page"
 <p>
     Lipsum
 </p>
+
+<%- @partial 'inline', { list_title: 'foo' } %>

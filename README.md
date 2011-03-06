@@ -1,12 +1,12 @@
 # Genstatic - A very simple static site generator
 
-Work in progress.
+Very early days.
 Based on coffeescript and eco
 You can define templates, partials and data files.
 
 ## Install
 
-Clone the git, cd into dir and do "npm install"
+    npm install genstatic
 
 ## Run
 
@@ -40,3 +40,10 @@ These default to:
 
 These values can be overwritten in config.coffee
 
+## Helpers
+
+By default available is the partial helper
+    
+    <%- @partial 'mytemplatename', { myvar : 'myvalue' } %>
+    
+Additional helpers can be defined in the file called helpers.coffee    

@@ -17,9 +17,9 @@ config =
 
 # defaul helpers
 helpers = 
-    partial : (str) ->
+    partial : (str, vars) ->
         pcontent = fs.readFileSync templatePath + '/' + str + extension
-        eco.render pcontent.toString(), this
+        eco.render pcontent.toString(), (_.extend this, vars || {})
 
 # add custom helpers
 addHelpers = () ->
@@ -59,11 +59,9 @@ compile = (filename, content, basedir) ->
 
     # read template file, render template and content
     fs.readFile template, (err, tcontent) ->
-        content = eco.render content, 
-            _.extend {}, config, fconfig, helpers, env
-            
-        output = eco.render tcontent.toString(), 
-            _.extend {}, config, fconfig, helpers, env, content: content
+        locals = _.extend {}, config, fconfig, helpers, env
+        locals.content = eco.render content, locals
+        output = eco.render tcontent.toString(), locals
 
         fs.writeFile (outPath + fname), output, 'utf-8', (err) ->
             if(err)
