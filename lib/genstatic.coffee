@@ -5,7 +5,7 @@ _ = require "underscore"
 fs = require "fs"
 eco = require "eco"
 
-sitePath = assetPath = outPath = dataPath = templatePath = null
+extension = sitePath = assetPath = outPath = dataPath = templatePath = null
 
 # defaul config
 config =
@@ -18,7 +18,7 @@ config =
 # defaul helpers
 helpers = 
     partial : (str) ->
-        pcontent = fs.readFileSync templatePath + '/' + str + config.extension
+        pcontent = fs.readFileSync templatePath + '/' + str + extension
         eco.render pcontent.toString(), this
 
 # add custom helpers
@@ -55,7 +55,7 @@ compile = (filename, content, basedir) ->
         filename : fname
         basedir : basedir
 
-    template = templatePath + '/' + fconfig.template + config.extension
+    template = templatePath + '/' + fconfig.template + extension
 
     # read template file, render template and content
     fs.readFile template, (err, tcontent) ->
@@ -126,6 +126,8 @@ checkFile = (path, message, callback) ->
 
 # process a data directory
 process = (dir) ->    
+    extension = config.extension
+
     checkDir dir, "not a valid directory", (stats) ->
     
         sitePath = rdir =  fs.realpathSync dir
@@ -137,7 +139,8 @@ process = (dir) ->
 
             # parse config file
             c = fs.readFileSync configPath
-            vm.runInNewContext c.toString(), config, '.'
+            js = coffee.compile c.toString(), bare: 1
+            vm.runInNewContext js, config, '.'
 
             templatePath = rdir + '/' + config.templates
             dataPath = rdir + '/' + config.data
@@ -162,6 +165,8 @@ process = (dir) ->
 
 
         startParsing = () ->
+            # clean the config object
+            config = {}
             copyAssets()
             outPath = fs.realpathSync outPath
             parseDir fs.realpathSync dataPath

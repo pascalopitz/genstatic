@@ -1,4 +1,0 @@
-Work in progress.
-Clone the git, cd into dir and do "npm install"
-
-Then you can run "genstatic -d ./example" to generate an example website in example/www.
