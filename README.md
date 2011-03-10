@@ -12,7 +12,7 @@ You can define templates, partials and data files.
 
 Create an example directory via
 
-    genstatic create ./example
+    genstatic example ./example
 
 
 Then you can run 
