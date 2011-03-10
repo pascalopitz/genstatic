@@ -129,7 +129,7 @@ checkFile = (path, message, callback) ->
         console.log message
         null    
 
-# process a data directory
+# process a project directory
 process = (dir) ->    
     extension = config.extension
 
@@ -176,10 +176,11 @@ process = (dir) ->
             outPath = path.normalize  outPath
             parseDir path.normalize  dataPath
 
+# creates an empty project
 create = (dir) ->
-    console.log "create example structure"
+    console.log "create empty project"
     spawn = require('child_process').spawn
-    cp  = spawn 'cp', ['-R', __dirname + '/../example', path.normalize dir]
+    cp  = spawn 'cp', ['-R', __dirname + '/../default', path.normalize dir]
     
     failed = false
     
@@ -187,7 +188,7 @@ create = (dir) ->
         if !failed
             console.log ""
             console.log "ERROR:"
-            console.log "creating example structure failed."
+            console.log "creating empty default project."
             console.log "Maybe the containing directory doesn\'t exists?"
             failed = true
             
@@ -195,23 +196,50 @@ create = (dir) ->
         
     cp.stdin.end()    
 
+# creates an example project
+example = (dir) ->
+    console.log "create example project"
+    spawn = require('child_process').spawn
+    cp  = spawn 'cp', ['-R', __dirname + '/../example', path.normalize dir]
+
+    failed = false
+
+    cp.stderr.on 'data', (data) ->
+        if !failed
+            console.log ""
+            console.log "ERROR:"
+            console.log "creating example project failed."
+            console.log "Maybe the containing directory doesn\'t exists?"
+            failed = true
+
+        cp.stderr.end()    
+
+    cp.stdin.end()    
+
 # check if argv is ok
 args = require("argsparser").parse()
 
-if !args["process"] && !args["create"]
+if !args["process"] && !args["example"] && !args["create"]
     console.log ""
-    console.log "To create a site:"
+    console.log "To create an empty project:"
     console.log "   genstatic create /path/to/site"
     console.log ""
-    console.log "To process a site:"
+    console.log "To create an example project:"
+    console.log "   genstatic example /path/to/site"
+    console.log ""
+    console.log "To process a project:"
     console.log "   genstatic process /path/to/site"
     console.log ""
     return
 
-# create an example folder
+# create an empty project
 if args["create"]
     create args["create"]
         
-# start to process the directory
+# create an example project
+if args["example"]
+    create args["example"]
+
+# start to process project
 if args["process"]
     process args["process"] 
