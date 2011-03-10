@@ -1,5 +1,6 @@
 #includes
 coffee = require "coffee-script"
+path = require "path"
 vm = require "vm"
 _ = require "underscore"
 fs = require "fs"
@@ -73,27 +74,33 @@ parseDir = (dir, depth) ->
     console.log "parsing " + dir
 
     basepath = (i) ->
-        path = ''
+        basepath = ''
         while i > 0
-            path += '../' 
+            basepath += '../' 
             i-- 
             
-        return path    
+        return basepath
+        
+    handleDir = (filename) ->
+        filepath = path.normalize dir + '/' + filename
+        fs.stat filepath, (err, stats) -> 
+            if !err && stats.isFile()
+                fs.readFile filepath, (err, contents) ->
+                    console.log "compiling file " + filepath.replace dataPath, ''
+                    compile filepath, contents.toString(), basepath depth
+            
+            if !err && stats.isDirectory()
+                newdir = filepath.replace dataPath, outPath
+                fs.mkdir newdir , "777", (err) ->
+                    parseDir (path.normalize filepath), depth + 1
+            
 
     fs.readdir dir, (err, files) ->
-        for filename in files
-          do (filename) ->
-            path = dir + '/' + filename
-            fs.stat path, (err, stats) ->
-                if !err && stats.isFile()
-                    fs.readFile path, (err, contents) ->
-                        console.log "compiling file " + path.replace dataPath, ''
-                        compile path, contents.toString(), basepath depth
-
-                if !err && stats.isDirectory()
-                    newdir = path.replace dataPath, outPath
-                    fs.mkdir newdir , "777", (err) ->
-                        parseDir (fs.realpathSync path), depth + 1
+        if err then console.log err.toString()
+        if files && files.length
+            for filename in files
+                do (filename) ->
+                    handleDir filename
 
 # copies the assets into the output folder
 copyAssets = () ->
@@ -128,7 +135,7 @@ process = (dir) ->
 
     checkDir dir, "not a valid directory", (stats) ->
     
-        sitePath = rdir =  fs.realpathSync dir
+        sitePath = rdir =  path.normalize dir
         configPath = rdir + '/config.coffee'
         
         addHelpers()
@@ -146,10 +153,10 @@ process = (dir) ->
             outPath = rdir + '/' + config.output
 
             checkDir templatePath, "not a valid template directory", (stats) ->
-                templatePath = fs.realpathSync templatePath
+                templatePath = path.normalize templatePath
 
                 checkDir dataPath, "not a valid data directory", (stats) ->
-                    dataPath = fs.realpathSync dataPath
+                    dataPath = path.normalize dataPath
 
                     checkDir assetPath, "not a valid asset directory", (stats) ->
 
@@ -166,16 +173,45 @@ process = (dir) ->
             # clean the config object
             config = {}
             copyAssets()
-            outPath = fs.realpathSync outPath
-            parseDir fs.realpathSync dataPath
+            outPath = path.normalize  outPath
+            parseDir path.normalize  dataPath
 
+create = (dir) ->
+    console.log "create example structure"
+    spawn = require('child_process').spawn
+    cp  = spawn 'cp', ['-R', __dirname + '/../example', path.normalize dir]
+    
+    failed = false
+    
+    cp.stderr.on 'data', (data) ->
+        if !failed
+            console.log ""
+            console.log "ERROR:"
+            console.log "creating example structure failed."
+            console.log "Maybe the containing directory doesn\'t exists?"
+            failed = true
+            
+        cp.stderr.end()    
+        
+    cp.stdin.end()    
 
 # check if argv is ok
 args = require("argsparser").parse()
 
-if !args["-d"]
-    console.log "Usage: genstatic -d ./site"
+if !args["process"] && !args["create"]
+    console.log ""
+    console.log "To create a site:"
+    console.log "   genstatic create /path/to/site"
+    console.log ""
+    console.log "To process a site:"
+    console.log "   genstatic process /path/to/site"
+    console.log ""
     return
 
+# create an example folder
+if args["create"]
+    create args["create"]
+        
 # start to process the directory
-process args["-d"] 
+if args["process"]
+    process args["process"] 

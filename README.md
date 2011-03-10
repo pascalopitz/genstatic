@@ -10,7 +10,16 @@ You can define templates, partials and data files.
 
 ## Run
 
-Then you can run "genstatic -d ./example" to generate an example website in example/www.
+Create an example directory via
+
+    genstatic create ./example
+
+
+Then you can run 
+    
+    genstatic process ./example
+    
+to generate the website in example/www.
 
 ## Variables inside the page
 

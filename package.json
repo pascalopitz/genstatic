@@ -2,7 +2,7 @@
     "name": "genstatic"
     , "description": "A static site generator"
     , "keywords": ["static"]
-    , "version": "0.0.1b"
+    , "version": "0.0.2b"
     , "author": "Pascal Opitz <pascal@ilikecode.co.uk> (http://www.ilikecode.co.uk)"
     , "main": "./lib/genstatic"
     , "bin": {
