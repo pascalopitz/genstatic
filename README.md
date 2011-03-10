@@ -12,14 +12,20 @@ You can define templates, partials and data files.
 
 Create an example directory via
 
-    genstatic example ./example
+    genstatic example /path/to/example
 
 
 Then you can run 
     
-    genstatic process ./example
+    genstatic process /path/to/example
     
 to generate the website in example/www.
+
+
+If you want an empty project
+
+    genstatic example /path/to/project
+
 
 ## Variables inside the page
 
