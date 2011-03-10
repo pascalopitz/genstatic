@@ -22,9 +22,9 @@ Then you can run
 to generate the website in example/www.
 
 
-If you want an empty project
+If you want to create an empty project
 
-    genstatic example /path/to/project
+    genstatic create /path/to/project
 
 
 ## Variables inside the page
